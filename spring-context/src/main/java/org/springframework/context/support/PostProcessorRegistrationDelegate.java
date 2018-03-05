@@ -62,11 +62,15 @@ class PostProcessorRegistrationDelegate {
 
 		if (beanFactory instanceof BeanDefinitionRegistry) {
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
+			//常规的beanFactoryPostProcessor(直接实现了BeanFactoryPostProcessor接口)
 			List<BeanFactoryPostProcessor> regularPostProcessors = new LinkedList<BeanFactoryPostProcessor>();
+			//实现了BeanDefinitionRegistryPostProcessor接口
 			List<BeanDefinitionRegistryPostProcessor> registryPostProcessors =
 					new LinkedList<BeanDefinitionRegistryPostProcessor>();
 
+			//此处是保证注册到applicationContext的beanFactoryPostProcessors的类优先执行(web项目的servletContext)
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
+				//此处先调用BeanDefinitionRegistryPostProcessor接口的postProcessBeanDefinitionRegistry方法
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryPostProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;
@@ -78,10 +82,10 @@ class PostProcessorRegistrationDelegate {
 				}
 			}
 
-			// Do not initialize FactoryBeans here: We need to leave all regular beans
-			// uninitialized to let the bean factory post-processors apply to them!
-			// Separate between BeanDefinitionRegistryPostProcessors that implement
-			// PriorityOrdered, Ordered, and the rest.
+//			 Do not initialize FactoryBeans here: We need to leave all regular beans
+//			 uninitialized to let the bean factory post-processors apply to them!
+//			 Separate between BeanDefinitionRegistryPostProcessors that implement
+//			 PriorityOrdered, Ordered, and the rest.
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 
@@ -111,6 +115,7 @@ class PostProcessorRegistrationDelegate {
 			invokeBeanDefinitionRegistryPostProcessors(orderedPostProcessors, registry);
 
 			// Finally, invoke all other BeanDefinitionRegistryPostProcessors until no further ones appear.
+			//保证每一个实现了BeanDefinitionRegistryPostProcessor接口的类都得到执行
 			boolean reiterate = true;
 			while (reiterate) {
 				reiterate = false;
@@ -248,7 +253,7 @@ class PostProcessorRegistrationDelegate {
 		// Finally, re-register all internal BeanPostProcessors.
 		sortPostProcessors(beanFactory, internalPostProcessors);
 		registerBeanPostProcessors(beanFactory, internalPostProcessors);
-
+		//用于检测ApplicationContextListener
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(applicationContext));
 	}
 

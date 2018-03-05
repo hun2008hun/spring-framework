@@ -504,12 +504,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
+			//记录时间、设置标记、解析校验属性
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
+			//刷新内部的bean factory,解析xml文件,注册bean definition
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
+			//配置bean factory特性
 			prepareBeanFactory(beanFactory);
 
 			try {
@@ -517,24 +520,41 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
+				/*
+			     * 调用实现了BeanFactoryPostProcessor和BeanDefinitionRegistryPostProcessor接口的类
+			     * 注意实现了Ordered接口顺序
+				 */
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				//注册实现了BeanPostProcessor接口到processor列表，未调用
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
+				/*
+			     * 如果已经定义则实例化，否则使用SimpleApplicationEventMulticaster
+				 */
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
+				/*
+				 * 模板方法
+				 */
 				onRefresh();
 
 				// Check for listener beans and register them.
+				/*
+				 *  注册ApplicationListener
+				 */
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				/*
+				 * 初始化剩下的单例bean（非懒加载）
+				 */
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
@@ -570,17 +590,21 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * active flag as well as performing any initialization of property sources.
 	 */
 	protected void prepareRefresh() {
+		//记录开始时间
 		this.startupDate = System.currentTimeMillis();
+		//设置关闭标记为false
 		this.closed.set(false);
+		//设置活动标记为true
 		this.active.set(true);
 
 		if (logger.isInfoEnabled()) {
 			logger.info("Refreshing " + this);
 		}
-
+		//web项目中有用？方法名取得不好，没理解具体做什么
+		//web项目中servletContextInitParams的属性
 		// Initialize any placeholder property sources in the context environment
 		initPropertySources();
-
+		//校验被设置为必须的属性合法
 		// Validate that all properties marked as required are resolvable
 		// see ConfigurablePropertyResolver#setRequiredProperties
 		getEnvironment().validateRequiredProperties();
@@ -626,6 +650,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
 		// Configure the bean factory with context callbacks.
+		//配置aware
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
 		beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
 		beanFactory.ignoreDependencyInterface(ApplicationEventPublisherAware.class);
@@ -796,6 +821,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Do not initialize FactoryBeans here: We need to leave all regular beans
 		// uninitialized to let post-processors apply to them!
+		/*
+		 *   (好像和ApplicationListenerDetector冲突，y已测试)
+		 *   此处是注册了Listener的名称，而实例是在bean初始化的时候加入，即ApplicationListenerDetector时
+		 *   实现了ApplicationListener接口的类是个bean,然后有个ApplicationListenerDetector的BeanPostProcessor
+		 *   这样在doGetBean时就会调用到
+		 */
 		String[] listenerBeanNames = getBeanNamesForType(ApplicationListener.class, true, false);
 		for (String listenerBeanName : listenerBeanNames) {
 			getApplicationEventMulticaster().addApplicationListenerBean(listenerBeanName);
@@ -833,6 +864,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.setTempClassLoader(null);
 
 		// Allow for caching all bean definition metadata, not expecting further changes.
+		/*
+		 * 冻结bean definition配置
+		 */
 		beanFactory.freezeConfiguration();
 
 		// Instantiate all remaining (non-lazy-init) singletons.
