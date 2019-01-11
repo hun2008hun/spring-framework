@@ -39,7 +39,13 @@ class AspectJAutoProxyBeanDefinitionParser implements BeanDefinitionParser {
 
 	@Override
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
+		/**
+		 * 配置并注册 {@link org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator}
+		 */
 		AopNamespaceUtils.registerAspectJAnnotationAutoProxyCreatorIfNecessary(parserContext, element);
+		/**
+		 * 配置附加属性
+		 */
 		extendBeanDefinition(element, parserContext);
 		return null;
 	}

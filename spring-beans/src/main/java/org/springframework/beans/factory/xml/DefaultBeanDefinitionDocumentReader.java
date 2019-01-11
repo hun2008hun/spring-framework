@@ -23,6 +23,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -91,6 +92,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		this.readerContext = readerContext;
 		logger.debug("Loading bean definitions");
 		Element root = doc.getDocumentElement();
+		/**
+		 * 真正的解析注册逻辑
+		 */
 		doRegisterBeanDefinitions(root);
 	}
 
@@ -121,9 +125,19 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		// then ultimately reset this.delegate back to its original (parent) reference.
 		// this behavior emulates a stack of delegates without actually necessitating one.
 		BeanDefinitionParserDelegate parent = this.delegate;
+		/**
+		 * 创建一个 {@link BeanDefinitionParserDelegate}，把解析任务委托给它
+		 * 如果有多个beans标签会导致此解析递归调用，为防止出现错误，需要创建新的并且传递parent
+		 */
 		this.delegate = createDelegate(getReaderContext(), root, parent);
 
+
+		/**
+		 * 判断是否默认的spring nameSpace {@link BeanDefinitionParserDelegate#BEANS_NAMESPACE_URI}
+		 * 如果uri为空也返回true
+		 */
 		if (this.delegate.isDefaultNamespace(root)) {
+			//校验profile条件
 			String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
 			if (StringUtils.hasText(profileSpec)) {
 				String[] specifiedProfiles = StringUtils.tokenizeToStringArray(
@@ -134,7 +148,13 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			}
 		}
 
+		/**
+		 * 准备方法，可以被重写
+		 */
 		preProcessXml(root);
+		/**
+		 * 解析 element、注册bean definitions
+		 */
 		parseBeanDefinitions(root, this.delegate);
 		postProcessXml(root);
 
@@ -161,10 +181,17 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 				Node node = nl.item(i);
 				if (node instanceof Element) {
 					Element ele = (Element) node;
+					/**
+					 * 此处分为默认的解析器和自定义的解析器，根据NameSpaceUri获取NameSpaceHandler
+					 * 自定义namespaceuri解析扩展需要实现{@link NamespaceHandlerSupport#init()}和{@link BeanDefinitionParser}
+					 * 并且需要在META-INF文件中创建spring.handles文件，类似于http\://code.alibabatech.com/schema/dubbo=com.alibaba.dubbo.config.spring.schema.DubboNamespaceHandler
+					 * 配置会被{@link DefaultNamespaceHandlerResolver#getHandlerMappings()}加载
+					 */
 					if (delegate.isDefaultNamespace(ele)) {
 						parseDefaultElement(ele, delegate);
 					}
 					else {
+
 						delegate.parseCustomElement(ele);
 					}
 				}
@@ -177,16 +204,25 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 
 	private void parseDefaultElement(Element ele, BeanDefinitionParserDelegate delegate) {
 		if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
+			//解析import节点，会触发import的xml文件解析
 			importBeanDefinitionResource(ele);
 		}
 		else if (delegate.nodeNameEquals(ele, ALIAS_ELEMENT)) {
+			//解析alias节点
 			processAliasRegistration(ele);
 		}
 		else if (delegate.nodeNameEquals(ele, BEAN_ELEMENT)) {
+			//解析bean节点，注册到beanDefinitionMaps
+			/**
+			 * {@link BeanDefinitionReaderUtils}工具类
+			 */
 			processBeanDefinition(ele, delegate);
 		}
 		else if (delegate.nodeNameEquals(ele, NESTED_BEANS_ELEMENT)) {
 			// recurse
+			/**
+			 * beans下面包含beans，递归调用
+			 */
 			doRegisterBeanDefinitions(ele);
 		}
 	}
@@ -292,11 +328,20 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * and registering it with the registry.
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
+		/**
+		 * 解析为{@link org.springframework.beans.factory.support.GenericBeanDefinition},并且有name和别名
+		 */
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
 		if (bdHolder != null) {
+			/**
+			 * 根据自定义属性(自定义的标签)修改beanDefinition
+			 */
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
 				// Register the final decorated instance.
+				/**
+				 * 注册beanDefinition,默认通过 {@link org.springframework.beans.factory.support.DefaultListableBeanFactory#registerBeanDefinition}
+				 */
 				BeanDefinitionReaderUtils.registerBeanDefinition(bdHolder, getReaderContext().getRegistry());
 			}
 			catch (BeanDefinitionStoreException ex) {
@@ -304,6 +349,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						bdHolder.getBeanName() + "'", ele, ex);
 			}
 			// Send registration event.
+			/**
+			 * 发送注册事件
+			 */
 			getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder));
 		}
 	}

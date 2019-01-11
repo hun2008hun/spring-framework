@@ -68,7 +68,7 @@ class PostProcessorRegistrationDelegate {
 			List<BeanDefinitionRegistryPostProcessor> registryPostProcessors =
 					new LinkedList<BeanDefinitionRegistryPostProcessor>();
 
-			//此处是保证注册到applicationContext的beanFactoryPostProcessors的类优先执行(web项目的servletContext)
+			//此处是保证注册到applicationContext的beanFactoryPostProcessors的类优先执行
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
 				//此处先调用BeanDefinitionRegistryPostProcessor接口的postProcessBeanDefinitionRegistry方法
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
@@ -199,6 +199,9 @@ class PostProcessorRegistrationDelegate {
 		// a bean is created during BeanPostProcessor instantiation, i.e. when
 		// a bean is not eligible for getting processed by all BeanPostProcessors.
 		int beanProcessorTargetCount = beanFactory.getBeanPostProcessorCount() + 1 + postProcessorNames.length;
+		/**
+		 * log记录bean注册完成但是执行的BeanPostProcessor不达标
+		 */
 		beanFactory.addBeanPostProcessor(new BeanPostProcessorChecker(beanFactory, beanProcessorTargetCount));
 
 		// Separate between BeanPostProcessors that implement PriorityOrdered,

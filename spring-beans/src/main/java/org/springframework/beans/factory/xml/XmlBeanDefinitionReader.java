@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
@@ -106,14 +107,29 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 	private Class<?> documentReaderClass = DefaultBeanDefinitionDocumentReader.class;
 
+	/**
+	 * 解析过程中快速失败
+	 */
 	private ProblemReporter problemReporter = new FailFastProblemReporter();
 
+	/**
+	 * 注册bean definition时间监听
+	 */
 	private ReaderEventListener eventListener = new EmptyReaderEventListener();
 
+	/**
+	 * 好像是用来提取元数据
+	 */
 	private SourceExtractor sourceExtractor = new NullSourceExtractor();
 
+	/**
+	 * 根据namespaceUri来获取对应的 {@link NamespaceHandler}
+	 */
 	private NamespaceHandlerResolver namespaceHandlerResolver;
 
+	/**
+	 * 加载xml文件到内存中，生成 {@link Document}
+	 */
 	private DocumentLoader documentLoader = new DefaultDocumentLoader();
 
 	private EntityResolver entityResolver;
@@ -301,6 +317,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	@Override
 	public int loadBeanDefinitions(Resource resource) throws BeanDefinitionStoreException {
+		/**
+		 * 包装了下resource，可以指定编码格式，此处明显未指定
+		 */
 		return loadBeanDefinitions(new EncodedResource(resource));
 	}
 
@@ -316,7 +335,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 		if (logger.isInfoEnabled()) {
 			logger.info("Loading XML bean definitions from " + encodedResource.getResource());
 		}
-
+		/**
+		 * 保证一个resource只能被一个线程解析
+		 */
 		Set<EncodedResource> currentResources = this.resourcesCurrentlyBeingLoaded.get();
 		if (currentResources == null) {
 			currentResources = new HashSet<EncodedResource>(4);
@@ -333,6 +354,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 				if (encodedResource.getEncoding() != null) {
 					inputSource.setEncoding(encodedResource.getEncoding());
 				}
+				/**
+				 * 真正加载xml文件，注册beanDefinition
+				 */
 				return doLoadBeanDefinitions(inputSource, encodedResource.getResource());
 			}
 			finally {
@@ -388,7 +412,13 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	protected int doLoadBeanDefinitions(InputSource inputSource, Resource resource)
 			throws BeanDefinitionStoreException {
 		try {
+			/**
+			 * 使用DocumentLoader从InputStream中加载xml
+			 */
 			Document doc = doLoadDocument(inputSource, resource);
+			/**
+			 * 逐条解析document的node,注册BeanDefinitions
+			 */
 			return registerBeanDefinitions(doc, resource);
 		}
 		catch (BeanDefinitionStoreException ex) {
@@ -503,8 +533,18 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see BeanDefinitionDocumentReader#registerBeanDefinitions
 	 */
 	public int registerBeanDefinitions(Document doc, Resource resource) throws BeanDefinitionStoreException {
+		/**
+		 * 实例化 {@link DefaultBeanDefinitionDocumentReader}
+		 */
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
+		/**
+		 * 获取之前已经注册的beanDefinition的数量
+		 * {@link DefaultListableBeanFactory#getBeanDefinitionCount()}
+		 */
 		int countBefore = getRegistry().getBeanDefinitionCount();
+		/**
+		 * 委托给 {@link DefaultBeanDefinitionDocumentReader}进行实际的解析和注册
+		 */
 		documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
 		return getRegistry().getBeanDefinitionCount() - countBefore;
 	}
@@ -523,6 +563,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * Create the {@link XmlReaderContext} to pass over to the document reader.
 	 */
 	public XmlReaderContext createReaderContext(Resource resource) {
+		/**
+		 * 保存一些解析注册需要用到的对象
+		 */
 		return new XmlReaderContext(resource, this.problemReporter, this.eventListener,
 				this.sourceExtractor, this, getNamespaceHandlerResolver());
 	}

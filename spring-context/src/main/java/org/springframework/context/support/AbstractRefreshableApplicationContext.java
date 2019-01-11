@@ -23,6 +23,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextException;
+import org.w3c.dom.Element;
 
 /**
  * Base class for {@link org.springframework.context.ApplicationContext}
@@ -125,8 +126,17 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 		try {
 			DefaultListableBeanFactory beanFactory = createBeanFactory();
 			beanFactory.setSerializationId(getId());
+			/**
+			 * {@link AbstractRefreshableApplicationContext#allowBeanDefinitionOverriding}
+			 * {@link AbstractRefreshableApplicationContext#allowCircularReferences}
+			 */
 			customizeBeanFactory(beanFactory);
-			//加载bean definition
+			/**
+			 * 解析XMl文件，定位、加载、注册bean definition，未实例化
+			 * {@link org.springframework.beans.factory.xml.XmlBeanDefinitionReader}
+			 * {@link org.springframework.beans.factory.support.RootBeanDefinition}
+			 * {@link org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader#doRegisterBeanDefinitions}
+			 */
 			loadBeanDefinitions(beanFactory);
 			synchronized (this.beanFactoryMonitor) {
 				this.beanFactory = beanFactory;

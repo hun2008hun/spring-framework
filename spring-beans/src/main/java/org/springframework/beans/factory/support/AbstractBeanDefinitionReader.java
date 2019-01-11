@@ -49,6 +49,9 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 	/** Logger available to subclasses */
 	protected final Log logger = LogFactory.getLog(getClass());
 
+	/**
+	 * 其实是 {@link DefaultListableBeanFactory}
+	 */
 	private final BeanDefinitionRegistry registry;
 
 	private ResourceLoader resourceLoader;
@@ -213,6 +216,7 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 		if (resourceLoader instanceof ResourcePatternResolver) {
 			// Resource pattern matching available.
 			try {
+				//定位获取
 				Resource[] resources = ((ResourcePatternResolver) resourceLoader).getResources(location);
 				int loadCount = loadBeanDefinitions(resources);
 				if (actualResources != null) {

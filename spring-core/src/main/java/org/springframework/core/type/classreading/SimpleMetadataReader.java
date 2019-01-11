@@ -48,7 +48,7 @@ final class SimpleMetadataReader implements MetadataReader {
 
 	SimpleMetadataReader(Resource resource, ClassLoader classLoader) throws IOException {
 		InputStream is = new BufferedInputStream(resource.getInputStream());
-		ClassReader classReader;
+		ClassReader classReader;  //asm方式读取
 		try {
 			classReader = new ClassReader(is);
 		}

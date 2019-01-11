@@ -462,6 +462,9 @@ public class BeanDefinitionParserDelegate {
 			if (!StringUtils.hasText(beanName)) {
 				try {
 					if (containingBean != null) {
+						/**
+						 * 没有配置 {@link NAME_ATTRIBUTE}属性的，根据className生成一个名称，后面会添加#hashCode
+						 */
 						beanName = BeanDefinitionReaderUtils.generateBeanName(
 								beanDefinition, this.readerContext.getRegistry(), true);
 					}
@@ -516,12 +519,16 @@ public class BeanDefinitionParserDelegate {
 	}
 
 	/**
+	 * 解析 bean标签位 {@link org.springframework.beans.factory.support.GenericBeanDefinition}
 	 * Parse the bean definition itself, without regard to name or aliases. May return
 	 * {@code null} if problems occurred during the parsing of the bean definition.
 	 */
 	public AbstractBeanDefinition parseBeanDefinitionElement(
 			Element ele, String beanName, BeanDefinition containingBean) {
 
+		/**
+		 * 使用stack，保证解析标签的时候是对称的
+		 */
 		this.parseState.push(new BeanEntry(beanName));
 
 		String className = null;
@@ -534,17 +541,39 @@ public class BeanDefinitionParserDelegate {
 			if (ele.hasAttribute(PARENT_ATTRIBUTE)) {
 				parent = ele.getAttribute(PARENT_ATTRIBUTE);
 			}
+			/**
+			 * 创建GenericBeanDefinition，设置beanName和beanClass
+			 */
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
-
+			/**
+			 * 解析 {@link BEAN_ELEMENT}配置的属性,设置到BeanDefinition中
+			 */
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
-
+			/**
+			 * 解析{@link META_ELEMENT}标签
+			 */
 			parseMetaElements(ele, bd);
+			/**
+			 * 解析{@link LOOKUP_METHOD_ELEMENT}标签，重写了其他bean的方法
+			 */
 			parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
+			/**
+			 * 解析{@link REPLACED_METHOD_ELEMENT}
+			 */
 			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
-
+			/**
+			 * 解析{@link CONSTRUCTOR_ARG_ELEMENT} 组装到{@link BeanDefinition#getConstructorArgumentValues()}
+			 *
+			 */
 			parseConstructorArgElements(ele, bd);
+			/**
+			 * 解析{@link PROPERTY_ELEMENT} 组装到{@link BeanDefinition#getPropertyValues()}
+			 */
 			parsePropertyElements(ele, bd);
+			/**
+			 * 解析{@link QUALIFIER_ELEMENT} 组装到{@link AbstractBeanDefinition#addQualifier}
+			 */
 			parseQualifierElements(ele, bd);
 
 			bd.setResource(this.readerContext.getResource());
@@ -831,6 +860,9 @@ public class BeanDefinitionParserDelegate {
 				else {
 					try {
 						this.parseState.push(new ConstructorArgumentEntry(index));
+						/**
+						 * 解析ref或者value
+						 */
 						Object value = parsePropertyValue(ele, bd, null);
 						ConstructorArgumentValues.ValueHolder valueHolder = new ConstructorArgumentValues.ValueHolder(value);
 						if (StringUtils.hasLength(typeAttr)) {
@@ -1401,8 +1433,18 @@ public class BeanDefinitionParserDelegate {
 		return parseCustomElement(ele, null);
 	}
 
+	/**
+	 * 解析自定义的标签
+	 * 实现{@link NamespaceHandlerSupport#init()}和{@link BeanDefinitionParser#parse(Element, ParserContext)}
+	 *
+	 * 参照{@link org.springframework.context.config.ContextNamespaceHandler}
+	 * @param ele
+	 * @param containingBd
+	 * @return
+	 */
 	public BeanDefinition parseCustomElement(Element ele, BeanDefinition containingBd) {
 		String namespaceUri = getNamespaceURI(ele);
+		//根据uri获取对应的NameSpaceHandler
 		NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
 		if (handler == null) {
 			error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", ele);
@@ -1511,7 +1553,11 @@ public class BeanDefinitionParserDelegate {
 	public boolean isDefaultNamespace(String namespaceUri) {
 		return (!StringUtils.hasLength(namespaceUri) || BEANS_NAMESPACE_URI.equals(namespaceUri));
 	}
-
+	/**
+	 * 如果没有nameSpaceUri或者等于 BEANS_NAMESPACE_URI都返回true
+	 * @param node
+	 * @return
+	 */
 	public boolean isDefaultNamespace(Node node) {
 		return isDefaultNamespace(getNamespaceURI(node));
 	}

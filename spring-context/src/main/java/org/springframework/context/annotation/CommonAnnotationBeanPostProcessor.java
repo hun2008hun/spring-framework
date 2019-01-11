@@ -196,7 +196,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	}
 
 
-	/**
+	/**F
 	 * Ignore the given resource type when resolving {@code @Resource}
 	 * annotations.
 	 * <p>By default, the {@code javax.xml.ws.WebServiceContext} interface

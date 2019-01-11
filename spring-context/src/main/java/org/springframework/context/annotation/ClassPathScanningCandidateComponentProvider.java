@@ -113,6 +113,7 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 */
 	public ClassPathScanningCandidateComponentProvider(boolean useDefaultFilters, Environment environment) {
 		if (useDefaultFilters) {
+			//注册默认的注解filter
 			registerDefaultFilters();
 		}
 		Assert.notNull(environment, "Environment must not be null");
@@ -265,7 +266,11 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	public Set<BeanDefinition> findCandidateComponents(String basePackage) {
 		Set<BeanDefinition> candidates = new LinkedHashSet<BeanDefinition>();
 		try {
+			/**
+			 * 类似于  classpath*:com/ibeiliao/pay/**\/*.class
+			 */
 			String packageSearchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
+					//解析.为/
 					resolveBasePackage(basePackage) + "/" + this.resourcePattern;
 			Resource[] resources = this.resourcePatternResolver.getResources(packageSearchPath);
 			boolean traceEnabled = logger.isTraceEnabled();
@@ -277,6 +282,9 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 				if (resource.isReadable()) {
 					try {
 						MetadataReader metadataReader = this.metadataReaderFactory.getMetadataReader(resource);
+						/**
+						 * 判断符合注解 {@link Component}或者元注解是{@link Component}
+						 */
 						if (isCandidateComponent(metadataReader)) {
 							ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
 							sbd.setResource(resource);
@@ -344,6 +352,9 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 		}
 		for (TypeFilter tf : this.includeFilters) {
 			if (tf.match(metadataReader, this.metadataReaderFactory)) {
+				/**
+				 * {@link Condition}是否激活
+				 */
 				return isConditionMatch(metadataReader);
 			}
 		}

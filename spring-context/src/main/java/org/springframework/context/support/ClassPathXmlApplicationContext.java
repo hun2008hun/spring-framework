@@ -132,9 +132,20 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	 */
 	public ClassPathXmlApplicationContext(String[] configLocations, boolean refresh, ApplicationContext parent)
 			throws BeansException {
-
+		/**
+		 * 1、配置{@link AbstractApplicationContext#resourcePatternResolver} = new PathMatchingResourcePatternResolver(this)
+		 * 用于查找指定路径下的文件或者类
+		 */
 		super(parent);
+		/**
+		 * 设置传入的xml配置，会对placeHolder做解析
+		 * 解析之前会初始化environment {@link org.springframework.core.env.StandardEnvironment}
+		 */
 		setConfigLocations(configLocations);
+		/**
+		 * 核心方法，刷新整个容器 {@link AbstractApplicationContext#refresh()}
+		 * 如果为false则后续手动刷新
+		 */
 		if (refresh) {
 			refresh();
 		}

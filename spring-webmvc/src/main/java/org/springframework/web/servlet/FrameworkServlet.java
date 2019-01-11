@@ -39,6 +39,7 @@ import org.springframework.context.event.SourceFilteringListener;
 import org.springframework.context.i18n.LocaleContext;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.context.i18n.SimpleLocaleContext;
+import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.core.GenericTypeResolver;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -491,7 +492,9 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		long startTime = System.currentTimeMillis();
 
 		try {
+			//初始化并且发布WebApplicationContext
 			this.webApplicationContext = initWebApplicationContext();
+			//空方法（所有属性被加载和WebApplicationContext被初始化）
 			initFrameworkServlet();
 		}
 		catch (ServletException ex) {
@@ -520,12 +523,18 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * @see #setContextConfigLocation
 	 */
 	protected WebApplicationContext initWebApplicationContext() {
+		/**
+		 * 从ServletContext获取到根WebApplicationContext(Spring容器),其实是通过{@link org.springframework.web.context.ContextLoaderListener}加载的
+		 * key:{@link WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE}
+		 */
 		WebApplicationContext rootContext =
 				WebApplicationContextUtils.getWebApplicationContext(getServletContext());
 		WebApplicationContext wac = null;
 
+		//MVC容器
 		if (this.webApplicationContext != null) {
 			// A context instance was injected at construction time -> use it
+			//有可能DispatcherServlet被作为Spring bean初始化，且webApplicationContext已被注入进来
 			wac = this.webApplicationContext;
 			if (wac instanceof ConfigurableWebApplicationContext) {
 				ConfigurableWebApplicationContext cwac = (ConfigurableWebApplicationContext) wac;
@@ -546,10 +555,12 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 			// has been registered in the servlet context. If one exists, it is assumed
 			// that the parent context (if any) has already been set and that the
 			// user has performed any initialization such as setting the context id
+			//是否已经存在于ServletContext中
 			wac = findWebApplicationContext();
 		}
 		if (wac == null) {
 			// No context instance is defined for this servlet -> create a local one
+			//没有Context被注册到Servlet就生成一个
 			wac = createWebApplicationContext(rootContext);
 		}
 
@@ -588,8 +599,10 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		if (attrName == null) {
 			return null;
 		}
+
 		WebApplicationContext wac =
 				WebApplicationContextUtils.getWebApplicationContext(getServletContext(), attrName);
+		//这里如果获取不到，就是初始化了一个WebApplicationContext当时没有注册到ServletContext
 		if (wac == null) {
 			throw new IllegalStateException("No WebApplicationContext found: initializer not registered?");
 		}
@@ -612,6 +625,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * @see org.springframework.web.context.support.XmlWebApplicationContext
 	 */
 	protected WebApplicationContext createWebApplicationContext(ApplicationContext parent) {
+		//默认是XmlWebApplicationContext
 		Class<?> contextClass = getContextClass();
 		if (this.logger.isDebugEnabled()) {
 			this.logger.debug("Servlet with name '" + getServletName() +
@@ -624,19 +638,21 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 					"': custom WebApplicationContext class [" + contextClass.getName() +
 					"] is not of type ConfigurableWebApplicationContext");
 		}
+		//反射生成WebApplicationContext
 		ConfigurableWebApplicationContext wac =
 				(ConfigurableWebApplicationContext) BeanUtils.instantiateClass(contextClass);
 
 		wac.setEnvironment(getEnvironment());
 		wac.setParent(parent);
 		wac.setConfigLocation(getContextConfigLocation());
-
+		//配置和刷新WebApplicationContext
 		configureAndRefreshWebApplicationContext(wac);
 
 		return wac;
 	}
 
 	protected void configureAndRefreshWebApplicationContext(ConfigurableWebApplicationContext wac) {
+		//ID
 		if (ObjectUtils.identityToString(wac).equals(wac.getId())) {
 			// The application context id is still set to its original default value
 			// -> assign a more useful id based on available information
@@ -662,9 +678,15 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		if (env instanceof ConfigurableWebEnvironment) {
 			((ConfigurableWebEnvironment) env).initPropertySources(getServletContext(), getServletConfig());
 		}
-
+		//处理一下wac，在它被刷新前
 		postProcessWebApplicationContext(wac);
+		/**
+		 * 根据xml配置的init-parameter的{@link ContextLoader#GLOBAL_INITIALIZER_CLASSES_PARAM}和{@link #contextInitializerClasses}
+		 */
 		applyInitializers(wac);
+		/**
+		 * {@link AbstractApplicationContext#refresh()}
+		 */
 		wac.refresh();
 	}
 
@@ -712,6 +734,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * @see ConfigurableApplicationContext#refresh()
 	 */
 	protected void applyInitializers(ConfigurableApplicationContext wac) {
+		//配置的一些初始化之前的事情,通过init-parameter
 		String globalClassNames = getServletContext().getInitParameter(ContextLoader.GLOBAL_INITIALIZER_CLASSES_PARAM);
 		if (globalClassNames != null) {
 			for (String className : StringUtils.tokenizeToStringArray(globalClassNames, INIT_PARAM_DELIMITERS)) {
@@ -724,8 +747,9 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 				this.contextInitializers.add(loadInitializer(className, wac));
 			}
 		}
-
+		//排序
 		AnnotationAwareOrderComparator.sort(this.contextInitializers);
+		//执行
 		for (ApplicationContextInitializer<ConfigurableApplicationContext> initializer : this.contextInitializers) {
 			initializer.initialize(wac);
 		}

@@ -78,12 +78,20 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	@Override
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
 		String basePackage = element.getAttribute(BASE_PACKAGE_ATTRIBUTE);
+		//解析属性 ，例如${packageName}
 		basePackage = parserContext.getReaderContext().getEnvironment().resolvePlaceholders(basePackage);
+		//根据,;分隔
 		String[] basePackages = StringUtils.tokenizeToStringArray(basePackage,
 				ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
 
 		// Actually scan for bean definitions and register them.
+		/**
+		 * 生成并且根据配置的其他属性设置 {@link ClassPathBeanDefinitionScanner}
+		 */
 		ClassPathBeanDefinitionScanner scanner = configureScanner(parserContext, element);
+		/**
+		 * 扫描classpath下的注解类并且注册bean definitions
+		 */
 		Set<BeanDefinitionHolder> beanDefinitions = scanner.doScan(basePackages);
 		registerComponents(parserContext.getReaderContext(), beanDefinitions, element);
 
@@ -121,6 +129,10 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 			parserContext.getReaderContext().error(ex.getMessage(), parserContext.extractSource(element), ex.getCause());
 		}
 
+		/**
+		 * 需要扫描那些注解或者不扫描那些注解
+		 * {@link AnnotationTypeFilter}
+		 */
 		parseTypeFilters(element, scanner, parserContext);
 
 		return scanner;
@@ -141,6 +153,10 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		}
 
 		// Register annotation config processors, if necessary.
+		/**
+		 * 注册注解驱动处理器，类似{@link Configuration} {@link org.springframework.beans.factory.annotation.Required}
+		 * {@link org.springframework.beans.factory.annotation.Autowired}等
+		 */
 		boolean annotationConfig = true;
 		if (element.hasAttribute(ANNOTATION_CONFIG_ATTRIBUTE)) {
 			annotationConfig = Boolean.valueOf(element.getAttribute(ANNOTATION_CONFIG_ATTRIBUTE));
@@ -156,6 +172,11 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		readerContext.fireComponentRegistered(compositeDef);
 	}
 
+	/**
+	 * 如果有配置NAME_GENERATOR_ATTRIBUTE属性，生成实例并设置给 {@link ClassPathBeanDefinitionScanner#setBeanNameGenerator(BeanNameGenerator)}
+	 * @param element
+	 * @param scanner
+	 */
 	protected void parseBeanNameGenerator(Element element, ClassPathBeanDefinitionScanner scanner) {
 		if (element.hasAttribute(NAME_GENERATOR_ATTRIBUTE)) {
 			BeanNameGenerator beanNameGenerator = (BeanNameGenerator) instantiateUserDefinedStrategy(
