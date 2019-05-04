@@ -36,6 +36,8 @@ import org.springframework.util.ReflectionUtils;
  * SPI as opposed to (or possibly in combination with) the traditional
  * {@code web.xml}-based approach.
  *
+ * Servlet 3.0 ServletContainerInitializer设计用于使用Spring的WebApplicationInitializer SPI支持Servlet容器的基于代码的配置，而不是(或可能与)传统web相结合。基于xml的方法。
+ *
  * <h2>Mechanism of Operation</h2>
  * This class will be loaded and instantiated and have its {@link #onStartup}
  * method invoked by any Servlet 3.0-compliant container during container startup assuming
@@ -46,6 +48,8 @@ import org.springframework.util.ReflectionUtils;
  * <a href="http://download.oracle.com/javase/6/docs/technotes/guides/jar/jar.html#Service%20Provider">
  * JAR Services API documentation</a> as well as section <em>8.2.4</em> of the Servlet 3.0
  * Final Draft specification for complete details.
+ *
+ * 假设spring-web JAR存在于类路径中,任何兼容Servlet 3.0的容器在启动期间加载和实例化这个类，并调用它的onStartup().这通过检测spring-web模块的META-INF/ Services /javax.servlet的JAR Services API serviceloader .load(Class)方法实现。ServletContainerInitializer服务提供程序配置文件。
  *
  * <h3>In combination with {@code web.xml}</h3>
  * A web application can choose to limit the amount of classpath scanning the Servlet
@@ -75,6 +79,7 @@ import org.springframework.util.ReflectionUtils;
  * each {@code WebApplicationInitializer} to do the actual work of initializing the
  * {@code ServletContext}. The exact process of delegation is described in detail in the
  * {@link #onStartup onStartup} documentation below.
+ * Spring的WebApplicationInitializer SPI只包含一个方法:WebApplicationInitializer.onStartup(ServletContext)。签名有意地与ServletContainerInitializer.onStartup(Set, ServletContext)非常想似:简单地说，SpringServletContainerInitializer负责实例化ServletContext并将其委托给任何用户定义的WebApplicationInitializer实现。然后，每个WebApplicationInitializer负责执行初始化ServletContext的实际工作。
  *
  * <h2>General Notes</h2>
  * In general, this class should be viewed as <em>supporting infrastructure</em> for
@@ -97,6 +102,11 @@ import org.springframework.util.ReflectionUtils;
  * <p>This class is neither designed for extension nor intended to be extended.
  * It should be considered an internal type, with {@code WebApplicationInitializer}
  * being the public-facing SPI.
+ *
+ * 通常，这个类应该被视为更重要的、面向用户的WebApplicationInitializer SPI的支持基础结构。利用这个容器初始化器也是完全可选的:虽然这个初始化器确实会在所有Servlet 3.0+运行时下加载和调用，但是用户仍然可以选择是否在类路径上提供任何WebApplicationInitializer实现。如果没有检测到WebApplicationInitializer类型，则此容器初始化器将不起作用。
+ * 请注意，这个容器初始化器和WebApplicationInitializer的使用并没有以任何方式“绑定”到Spring MVC，除非类型是在Spring -web模块JAR中提供的。相反，它们可以被认为是通用的，因为它们能够方便地基于代码配置ServletContext。换句话说，任何servlet、侦听器或过滤器都可以在WebApplicationInitializer中注册，而不仅仅是Spring特定于mvc的组件。
+ *
+ * 这个类既不是为扩展而设计的，也不打算被扩展。它应该被认为是一种内部类型，WebApplicationInitializer是面向公共的SPI。
  *
  * <h2>See Also</h2>
  * See {@link WebApplicationInitializer} Javadoc for examples and detailed usage

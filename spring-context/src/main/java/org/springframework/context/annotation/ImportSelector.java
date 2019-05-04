@@ -23,6 +23,8 @@ import org.springframework.core.type.AnnotationMetadata;
  * class(es) should be imported based on a given selection criteria, usually one or more
  * annotation attributes.
  *
+ * 接口实现的类型根据给定的选择标准(通常是一个或多个注释属性)确定应该导入哪个@Configuration类。
+ *
  * <p>An {@link ImportSelector} may implement any of the following
  * {@link org.springframework.beans.factory.Aware Aware} interfaces, and their respective
  * methods will be called prior to {@link #selectImports}:

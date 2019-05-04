@@ -30,6 +30,8 @@ import org.springframework.lang.Nullable;
  * ComponentDefinition based on a standard BeanDefinition, exposing the given bean
  * definition as well as inner bean definitions and bean references for the given bean.
  *
+ * ComponentDefinition基于标准BeanDefinition，公开给定的bean定义以及给定bean的内部bean定义和bean引用。
+ *
  * @author Rob Harrop
  * @author Juergen Hoeller
  * @since 2.0

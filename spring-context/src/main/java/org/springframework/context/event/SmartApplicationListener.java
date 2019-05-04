@@ -28,6 +28,9 @@ import org.springframework.lang.Nullable;
  * <p>For full introspection of generic event types, consider implementing
  * the {@link GenericApplicationListener} interface instead.
  *
+ * 标准ApplicationListener接口的扩展变体，公开进一步的元数据，如受支持的事件和源类型。
+ * 对于泛型事件类型的完整内省，可以考虑实现GenericApplicationListener接口。
+ *
  * @author Juergen Hoeller
  * @since 3.0
  * @see GenericApplicationListener

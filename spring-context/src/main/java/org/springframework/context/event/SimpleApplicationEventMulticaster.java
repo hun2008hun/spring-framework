@@ -41,6 +41,10 @@ import org.springframework.util.ErrorHandler;
  * but adds minimal overhead. Specify an alternative task executor to have
  * listeners executed in different threads, for example from a thread pool.
  *
+ *
+ * 广播所有事件给注册的侦听器，让侦听器自己忽略它们不感兴趣的事件。侦听器通常会对传入的事件对象执行相应的instanceof检查。
+ *
+ * 默认情况下，所有侦听器都在主线程中调用。这允许恶意侦听器阻塞整个应用程序的危险，但会增加最小的开销。指定另一个任务执行器，使侦听器在不同的线程中执行，例如从线程池中执行侦听器。
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @author Stephane Nicoll

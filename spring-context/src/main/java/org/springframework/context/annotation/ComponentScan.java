@@ -138,6 +138,8 @@ public @interface ComponentScan {
 	Filter[] includeFilters() default {};
 
 	/**
+	 *
+	 * 指定那些类型不需要被组件扫描
 	 * Specifies which types are not eligible for component scanning.
 	 * @see #resourcePattern
 	 */

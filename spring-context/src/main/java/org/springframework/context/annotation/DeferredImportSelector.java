@@ -26,6 +26,8 @@ import org.springframework.lang.Nullable;
  * have been processed. This type of selector can be particularly useful when the selected
  * imports are {@code @Conditional}.
  *
+ * ImportSelector的一个变体，将在所有@Configuration beans 被处理完成之后运行。当Conditional时这个类型的selector尤其有用
+ *
  * <p>Implementations can also extend the {@link org.springframework.core.Ordered}
  * interface or use the {@link org.springframework.core.annotation.Order} annotation to
  * indicate a precedence against other {@link DeferredImportSelector}s.
