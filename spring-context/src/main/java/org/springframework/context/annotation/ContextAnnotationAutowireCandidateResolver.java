@@ -42,7 +42,7 @@ import org.springframework.util.Assert;
  * driven by the {@link Lazy} annotation in the {@code context.annotation} package.
  *
  * @author Juergen Hoeller
- * @since 4.0
+ * @since 4.0DependencyDescriptor
  */
 public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotationAutowireCandidateResolver {
 

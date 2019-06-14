@@ -236,6 +236,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 
 	@Override
 	public Object getEarlyBeanReference(Object bean, String beanName) throws BeansException {
+		//beanname或者bean.getClass
 		Object cacheKey = getCacheKey(bean.getClass(), beanName);
 		if (!this.earlyProxyReferences.contains(cacheKey)) {
 			this.earlyProxyReferences.add(cacheKey);
@@ -301,6 +302,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		if (bean != null) {
 			Object cacheKey = getCacheKey(bean.getClass(), beanName);
 			if (!this.earlyProxyReferences.contains(cacheKey)) {
+				//核心逻辑，获取proxy类
 				return wrapIfNecessary(bean, beanName, cacheKey);
 			}
 		}
@@ -349,9 +351,15 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		}
 
 		// Create proxy if we have advice.
+		//获取适用于这个bean的AdvicesAndAdvisors
+		//1.首先获取所有的beanName，过滤出其被aspect注解的，然后封装为InstantiationModelAwarePointcutAdvisorImpl(内部为各种advice和point cut)
+		//2.根据point cut的express判断此bean是否试用的advice(methodInterceptor)
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
 		if (specificInterceptors != DO_NOT_PROXY) {
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
+			//创建proxy
+			//1.proxyFactory创建对应的aopproxy(JdkDynamicAopProxy和CglibAopProxy)
+			//2.创建proxy
 			Object proxy = createProxy(
 					bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
 			this.proxyTypes.put(cacheKey, proxy.getClass());
@@ -459,7 +467,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 				evaluateProxyInterfaces(beanClass, proxyFactory);
 			}
 		}
-
+		//转为advisor
 		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
 		proxyFactory.addAdvisors(advisors);
 		proxyFactory.setTargetSource(targetSource);

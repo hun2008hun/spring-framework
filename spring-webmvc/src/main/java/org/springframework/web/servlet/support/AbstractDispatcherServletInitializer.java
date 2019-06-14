@@ -59,7 +59,9 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 
 	@Override
 	public void onStartup(ServletContext servletContext) throws ServletException {
+		//根据RootConfigClasses创建root application context,可能为空
 		super.onStartup(servletContext);
+		//注册dispatcher servlet
 		registerDispatcherServlet(servletContext);
 	}
 
@@ -77,14 +79,16 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 	protected void registerDispatcherServlet(ServletContext servletContext) {
 		String servletName = getServletName();
 		Assert.hasLength(servletName, "getServletName() must not return null or empty");
-
+		//创建servlet application  context
 		WebApplicationContext servletAppContext = createServletApplicationContext();
 		Assert.notNull(servletAppContext, "createServletApplicationContext() must not return null");
-
+		//创建dispatcher
 		FrameworkServlet dispatcherServlet = createDispatcherServlet(servletAppContext);
 		Assert.notNull(dispatcherServlet, "createDispatcherServlet(WebApplicationContext) must not return null");
+		//把application context initializer添加到application context
 		dispatcherServlet.setContextInitializers(getServletApplicationContextInitializers());
 
+		//注册dispatcher servlet到servlet context
 		ServletRegistration.Dynamic registration = servletContext.addServlet(servletName, dispatcherServlet);
 		if (registration == null) {
 			throw new IllegalStateException("Failed to register servlet with name '" + servletName + "'. " +

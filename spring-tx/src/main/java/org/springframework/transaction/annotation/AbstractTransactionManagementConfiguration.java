@@ -64,6 +64,7 @@ public abstract class AbstractTransactionManagementConfiguration implements Impo
 		}
 	}
 
+
 	@Autowired(required = false)
 	void setConfigurers(Collection<TransactionManagementConfigurer> configurers) {
 		if (CollectionUtils.isEmpty(configurers)) {
@@ -72,6 +73,7 @@ public abstract class AbstractTransactionManagementConfiguration implements Impo
 		if (configurers.size() > 1) {
 			throw new IllegalStateException("Only one TransactionManagementConfigurer may exist");
 		}
+		//其实就是配置PlatformTransactionManager
 		TransactionManagementConfigurer configurer = configurers.iterator().next();
 		this.txManager = configurer.annotationDrivenTransactionManager();
 	}

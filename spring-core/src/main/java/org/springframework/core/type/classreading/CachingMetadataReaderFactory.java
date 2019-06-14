@@ -116,6 +116,7 @@ public class CachingMetadataReaderFactory extends SimpleMetadataReaderFactory {
 
 	@Override
 	public MetadataReader getMetadataReader(Resource resource) throws IOException {
+		//缓存 resource 和 SimpleMetadataReader
 		if (this.metadataReaderCache instanceof ConcurrentMap) {
 			// No synchronization necessary...
 			MetadataReader metadataReader = this.metadataReaderCache.get(resource);

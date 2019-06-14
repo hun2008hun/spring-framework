@@ -51,6 +51,7 @@ abstract class ConfigurationClassUtils {
 
 	private static final String CONFIGURATION_CLASS_LITE = "lite";
 
+	//org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass
 	private static final String CONFIGURATION_CLASS_ATTRIBUTE =
 			Conventions.getQualifiedAttributeName(ConfigurationClassPostProcessor.class, "configurationClass");
 
@@ -84,6 +85,9 @@ abstract class ConfigurationClassUtils {
 			return false;
 		}
 
+		//1.如果是AnnotatedBeanDefinition 就直接使用内部的AnnotationMetadata
+		//2.如果是AbstractBeanDefinition 就创建一个StandardAnnotationMetadata
+		//3.否则就使用asm读取class  AnnotationMetadataReadingVisitor和ClassReader
 		AnnotationMetadata metadata;
 		if (beanDef instanceof AnnotatedBeanDefinition &&
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
@@ -109,9 +113,11 @@ abstract class ConfigurationClassUtils {
 			}
 		}
 
+		//被 @Configuration注解修饰
 		if (isFullConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
+		// 被 @Component @ComponentScan @Import @ImportResource修饰  或者有方法被@Bean修饰
 		else if (isLiteConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}
@@ -119,6 +125,7 @@ abstract class ConfigurationClassUtils {
 			return false;
 		}
 
+		// @Order
 		// It's a full or lite configuration candidate... Let's determine the order value, if any.
 		Integer order = getOrder(metadata);
 		if (order != null) {

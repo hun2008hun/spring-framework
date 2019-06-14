@@ -37,6 +37,7 @@ import org.springframework.transaction.interceptor.TransactionInterceptor;
 @Configuration
 public class ProxyTransactionManagementConfiguration extends AbstractTransactionManagementConfiguration {
 
+	//advisor，其实就是TransactionAttributeSource+pointcut
 	@Bean(name = TransactionManagementConfigUtils.TRANSACTION_ADVISOR_BEAN_NAME)
 	@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 	public BeanFactoryTransactionAttributeSourceAdvisor transactionAdvisor() {
@@ -49,17 +50,22 @@ public class ProxyTransactionManagementConfiguration extends AbstractTransaction
 		return advisor;
 	}
 
+
+	//处理transactional注解的，内部有各种annotationParsers(核心是SpringTransactionAnnotationParser)，解析其各种属性组装成TransactionAttribute
 	@Bean
 	@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 	public TransactionAttributeSource transactionAttributeSource() {
 		return new AnnotationTransactionAttributeSource();
 	}
 
+
+	//这个是具体的增强器,事务核心逻辑在此处执行
 	@Bean
 	@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 	public TransactionInterceptor transactionInterceptor() {
 		TransactionInterceptor interceptor = new TransactionInterceptor();
 		interceptor.setTransactionAttributeSource(transactionAttributeSource());
+		//此处需要注入一个PlatformTransactionManager，看父类就知道是需要我们实现一个TransactionManagementConfigurer，父类从其获得使用manager
 		if (this.txManager != null) {
 			interceptor.setTransactionManager(this.txManager);
 		}

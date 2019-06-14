@@ -166,6 +166,7 @@ class ConfigurationClassParser {
 		for (BeanDefinitionHolder holder : configCandidates) {
 			BeanDefinition bd = holder.getBeanDefinition();
 			try {
+				//封装为统一处理逻辑
 				if (bd instanceof AnnotatedBeanDefinition) {
 					parse(((AnnotatedBeanDefinition) bd).getMetadata(), holder.getBeanName());
 				}
@@ -185,6 +186,7 @@ class ConfigurationClassParser {
 			}
 		}
 
+		//解析 DeferredImportSelector
 		processDeferredImportSelectors();
 	}
 
@@ -218,6 +220,7 @@ class ConfigurationClassParser {
 
 
 	protected void processConfigurationClass(ConfigurationClass configClass) throws IOException {
+		//根据conditional,判断是否跳过该注解
 		if (this.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) {
 			return;
 		}
@@ -228,6 +231,7 @@ class ConfigurationClassParser {
 				if (existingClass.isImported()) {
 					existingClass.mergeImportedBy(configClass);
 				}
+				//否则忽略新导入的配置类; 现有的非导入类会覆盖它。
 				// Otherwise ignore new imported config class; existing non-imported class overrides it.
 				return;
 			}
@@ -262,6 +266,7 @@ class ConfigurationClassParser {
 			throws IOException {
 
 		// Recursively process any member (nested) classes first
+		//成员嵌套类
 		processMemberClasses(configClass, sourceClass);
 
 		// Process any @PropertySource annotations
@@ -395,6 +400,7 @@ class ConfigurationClassParser {
 			// Try reading the class file via ASM for deterministic declaration order...
 			// Unfortunately, the JVM's standard reflection returns methods in arbitrary
 			// order, even between different runs of the same application on the same JVM.
+			//尝试将类文件读取到ASM以获得确定性声明顺序...不幸的是，JVM的标准反射以任意顺序返回方法，即使在同一JVM上的同一应用程序的不同运行之间也是如此。
 			try {
 				AnnotationMetadata asm =
 						this.metadataReaderFactory.getMetadataReader(original.getClassName()).getAnnotationMetadata();

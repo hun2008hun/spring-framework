@@ -168,6 +168,7 @@ public @interface EnableTransactionManagement {
 	 * time. This approach has no negative impact in practice unless one is explicitly
 	 * expecting one type of proxy vs another, e.g. in tests.
 	 */
+	//跟aop的相同
 	boolean proxyTargetClass() default false;
 
 	/**
@@ -180,6 +181,7 @@ public @interface EnableTransactionManagement {
 	 * scenario. For a more advanced mode of interception, consider switching this to
 	 * {@link AdviceMode#ASPECTJ}.
 	 */
+	//默认使用proxy，就是只有代理对象调用会有事务，自调用没有
 	AdviceMode mode() default AdviceMode.PROXY;
 
 	/**

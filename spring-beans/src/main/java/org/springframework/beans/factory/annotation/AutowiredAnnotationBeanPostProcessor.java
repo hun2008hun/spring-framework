@@ -163,7 +163,11 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	 * setter methods and arbitrary config methods.
 	 * <p>The default autowired annotation type is the Spring-provided {@link Autowired}
 	 * annotation, as well as {@link Value}.
-	 * <p>This setter property exists so that developers can provide their own
+	 * <p>This setter property exists so that developers c
+	 *
+	 *
+	 *
+	 * an provide their own
 	 * (non-Spring-specific) annotation type to indicate that a member is supposed
 	 * to be autowired.
 	 */
@@ -227,6 +231,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 
 	@Override
 	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
+		//获取被autowired注释的field和method存入InjectedElement
 		InjectionMetadata metadata = findAutowiringMetadata(beanName, beanType, null);
 		metadata.checkConfigMembers(beanDefinition);
 	}
@@ -365,8 +370,10 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	public PropertyValues postProcessPropertyValues(
 			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) throws BeanCreationException {
 
+		//和postProcessMergedBeanDefinition方法，此处其实是获取缓存
 		InjectionMetadata metadata = findAutowiringMetadata(beanName, bean.getClass(), pvs);
 		try {
+			//注入
 			metadata.inject(bean, beanName, pvs);
 		}
 		catch (BeanCreationException ex) {
@@ -412,6 +419,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 					if (metadata != null) {
 						metadata.clear(pvs);
 					}
+					//获取其中被@Autowired注释的field或者method，存入InjectedElement
 					metadata = buildAutowiringMetadata(clazz);
 					this.injectionMetadataCache.put(cacheKey, metadata);
 				}
@@ -442,6 +450,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 			});
 
 			ReflectionUtils.doWithLocalMethods(targetClass, method -> {
+				//bridge method获取实际
 				Method bridgedMethod = BridgeMethodResolver.findBridgedMethod(method);
 				if (!BridgeMethodResolver.isVisibilityBridgeMethodPair(method, bridgedMethod)) {
 					return;

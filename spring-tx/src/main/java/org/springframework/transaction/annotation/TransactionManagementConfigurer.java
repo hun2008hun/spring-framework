@@ -77,6 +77,7 @@ public interface TransactionManagementConfigurer {
 	 * of Spring lifecycle callbacks such as {@code InitializingBean} and
 	 * {@code BeanFactoryAware}.
 	 */
+	//使用注解事务时，实现才方法定义其PlatformTransactionManager，多数使用DataSourceTransactionManager
 	PlatformTransactionManager annotationDrivenTransactionManager();
 
 }

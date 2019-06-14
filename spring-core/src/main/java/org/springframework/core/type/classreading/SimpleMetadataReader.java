@@ -62,6 +62,7 @@ final class SimpleMetadataReader implements MetadataReader {
 		}
 
 		AnnotationMetadataReadingVisitor visitor = new AnnotationMetadataReadingVisitor(classLoader);
+		//visitor设计模式，主要是访问method和annotation
 		classReader.accept(visitor, ClassReader.SKIP_DEBUG);
 
 		this.annotationMetadata = visitor;

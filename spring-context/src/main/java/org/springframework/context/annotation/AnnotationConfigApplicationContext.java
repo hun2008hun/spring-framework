@@ -52,8 +52,10 @@ import org.springframework.util.Assert;
  */
 public class AnnotationConfigApplicationContext extends GenericApplicationContext implements AnnotationConfigRegistry {
 
+	//注册annotation的各种处理器和扫描注解beandefinition
 	private final AnnotatedBeanDefinitionReader reader;
 
+	//解析配置在xml中的beandefinition
 	private final ClassPathBeanDefinitionScanner scanner;
 
 
@@ -83,8 +85,13 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * e.g. {@link Configuration @Configuration} classes
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... annotatedClasses) {
+		/**
+		 * 初始化 {@link AnnotatedBeanDefinitionReader}和{@link ClassPathBeanDefinitionScanner}
+		 * AnnotatedBeanDefinitionReader中会加载 {@link org.springframework.core.env.StandardEnvironment}
+		 * AnnotatedBeanDefinitionReader初始化时注册所有相关的post processor
+		 */
 		this();
-		register(annotatedClasses);
+		register(annotatedClasses);  //使用annotatedBeanDefinitionReader注册传入annotatedClass
 		refresh();
 	}
 

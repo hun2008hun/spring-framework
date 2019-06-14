@@ -47,6 +47,7 @@ public abstract class AbstractContextLoaderInitializer implements WebApplication
 
 	@Override
 	public void onStartup(ServletContext servletContext) throws ServletException {
+		//创建root application context ，如果不设置getRootConfigClasses，此context不创建
 		registerContextLoaderListener(servletContext);
 	}
 

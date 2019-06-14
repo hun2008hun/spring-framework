@@ -49,7 +49,7 @@ public class BeanFactoryTransactionAttributeSourceAdvisor extends AbstractBeanFa
 	/**
 	 * Set the transaction attribute source which is used to find transaction
 	 * attributes. This should usually be identical to the source reference
-	 * set on the transaction interceptor itself.
+	 * set on the transaction interceptor itself.InitializingBean
 	 * @see TransactionInterceptor#setTransactionAttributeSource
 	 */
 	public void setTransactionAttributeSource(TransactionAttributeSource transactionAttributeSource) {
