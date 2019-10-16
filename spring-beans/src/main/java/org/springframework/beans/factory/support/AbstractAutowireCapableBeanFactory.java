@@ -533,6 +533,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// Instantiate the bean.
 		BeanWrapper instanceWrapper = null;
+		//单例清除factorybean缓存
 		if (mbd.isSingleton()) {
 			// factory bean
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
@@ -570,6 +571,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				logger.debug("Eagerly caching bean '" + beanName +
 						"' to allow for resolving potential circular references");
 			}
+			//暴露未完成bean的beanfactory到singletonFactories中，解决singleton的循环依赖
 			//注册到 singletonFactories 和 registeredSingletons
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 		}
@@ -1094,6 +1096,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 					"Bean class isn't public, and non-public access not allowed: " + beanClass.getName());
 		}
+
+		//如果存在instanceSupplier
 		/**
 		 *  {@link AbstractBeanDefinition.instanceSupplier}
  		 */
@@ -1102,6 +1106,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			return obtainFromSupplier(instanceSupplier, beanName);
 		}
 
+		//如果存在factory method
 		// factory method,
 		if (mbd.getFactoryMethodName() != null)  {
 			return instantiateUsingFactoryMethod(beanName, mbd, args);
@@ -1131,6 +1136,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		 * {@link SmartInstantiationAwareBeanPostProcessor}
 		 */
 		// Candidate constructors for autowiring?
+		//SmartInstantiationAwareBeanPostProcessor#determineCandidateConstructors
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
 		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR ||
 				mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args))  {

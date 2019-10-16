@@ -176,6 +176,7 @@ class ConstructorResolver {
 			for (Constructor<?> candidate : candidates) {
 				Class<?>[] paramTypes = candidate.getParameterTypes();
 
+				//降序
 				if (constructorToUse != null && argsToUse.length > paramTypes.length) {
 					// Already found greedy constructor that can be satisfied ->
 					// do not look any further, there are only less greedy constructors left.
@@ -364,13 +365,17 @@ class ConstructorResolver {
 		Class<?> factoryClass;
 		boolean isStatic;
 
+
 		String factoryBeanName = mbd.getFactoryBeanName();
+		//存在factoryBeanName说明factory method不是static的，需要先从beanfactory中获取这个bean（factoryBeanName）
+		// Configuration注解中的bean注解初始化bean就是设置成factory method
 		if (factoryBeanName != null) {
 			if (factoryBeanName.equals(beanName)) {
 				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
 						"factory-bean reference points back to the same bean definition");
 			}
 			factoryBean = this.beanFactory.getBean(factoryBeanName);
+			//bean已经初始化了
 			if (mbd.isSingleton() && this.beanFactory.containsSingleton(beanName)) {
 				throw new ImplicitlyAppearedSingletonException();
 			}
@@ -396,6 +401,7 @@ class ConstructorResolver {
 			argsToUse = explicitArgs;
 		}
 		else {
+			//此处是解析Constructor或者FactoryMethod,然后放入BeanDefinition的缓存中（resolvedConstructorOrFactoryMethod）
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
 				factoryMethodToUse = (Method) mbd.resolvedConstructorOrFactoryMethod;
@@ -407,6 +413,7 @@ class ConstructorResolver {
 					}
 				}
 			}
+			//待补充，主要是用于解析Constructor注入的参数
 			if (argsToResolve != null) {
 				argsToUse = resolvePreparedArguments(beanName, mbd, bw, factoryMethodToUse, argsToResolve);
 			}
@@ -415,19 +422,24 @@ class ConstructorResolver {
 		if (factoryMethodToUse == null || argsToUse == null) {
 			// Need to determine the factory method...
 			// Try all methods with this name to see if they match the given arguments.
-			factoryClass = ClassUtils.getUserClass(factoryClass);
 
+			//去除cglib
+			factoryClass = ClassUtils.getUserClass(factoryClass);
+			//获取最初的method
 			Method[] rawCandidates = getCandidateMethods(factoryClass, mbd);
 			List<Method> candidateList = new ArrayList<>();
+			//根据isStatic和factoryMethodName处理最初的method
 			for (Method candidate : rawCandidates) {
 				if (Modifier.isStatic(candidate.getModifiers()) == isStatic && mbd.isFactoryMethod(candidate)) {
 					candidateList.add(candidate);
 				}
 			}
 			Method[] candidates = candidateList.toArray(new Method[0]);
+			//排序 public、参数个数降序、private、参数个数降序
 			AutowireUtils.sortFactoryMethods(candidates);
 
 			ConstructorArgumentValues resolvedValues = null;
+			//constructor注入
 			boolean autowiring = (mbd.getResolvedAutowireMode() == AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR);
 			int minTypeDiffWeight = Integer.MAX_VALUE;
 			Set<Method> ambiguousFactoryMethods = null;
@@ -721,6 +733,7 @@ class ConstructorResolver {
 							"] - did you specify the correct bean references as arguments?");
 				}
 				try {
+					//如果是构造输入，此处会解析depend bean
 					Object autowiredArgument =
 							resolveAutowiredArgument(methodParam, beanName, autowiredBeanNames, converter);
 					args.rawArguments[paramIndex] = autowiredArgument;
